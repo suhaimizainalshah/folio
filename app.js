@@ -20,7 +20,7 @@ const safeName = () => ($("#docName").value.trim() || "document").replace(/[\\/:
 const COUNTER = { on: true, ns: "folio-pdf-editor", keys: { visits: "Visits", opens: "Files opened", downloads: "PDFs downloaded", splits: "Splits", compress: "Compressions", images: "Image exports", convert: "Word and PowerPoint exports", redact: "Redacted downloads", forms: "Forms filled", requests: "Signing requests created", signed: "Documents signed" } };
 const canCount = COUNTER.on && !navigator.globalPrivacyControl && navigator.doNotTrack !== "1" && /^https?:/.test(location.protocol);
 function count(key) { if (!canCount) return; try { fetch(`https://abacus.jasoncameron.dev/hit/${COUNTER.ns}/${key}`, { keepalive: true }).catch(() => {}); } catch {} }
-try { if (!sessionStorage.getItem("folio-visit")) { sessionStorage.setItem("folio-visit", "1"); count("visits"); } } catch {}
+try { if (location.hash !== "#stats" && !sessionStorage.getItem("folio-visit")) { sessionStorage.setItem("folio-visit", "1"); count("visits"); } } catch {}
 async function showStats() {
   const d = $("#statsDlg"), list = $("#statsList"); d.showModal();
   if (!/^https?:/.test(location.protocol)) { list.textContent = "Counts work once the site is online."; return; }

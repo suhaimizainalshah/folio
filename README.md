@@ -2,6 +2,14 @@
 
 Merge, split, reorder, rotate, sign, fill in, annotate, number, watermark, compress and convert PDFs. No account, no limits, no watermarks. Files are processed on the visitor's own device and never uploaded.
 
+## Put it online with GitHub Pages
+1. Create a new **public** repository on github.com, for example `folio`.
+2. Click **uploading an existing file** and drag in everything: `index.html`, `app.js`, `README.md` and the whole `vendor` folder. Click **Commit changes**.
+3. Open **Settings → Pages**, choose **Deploy from a branch**, branch `main`, folder `/ (root)`, and **Save**.
+4. In about a minute it is live at `https://<your-username>.github.io/folio/`.
+
+It must be opened from a web address (GitHub Pages or a local server), not by double-clicking `index.html`, because browsers block the PDF engine's background worker on `file://` pages. To run it on your own computer: open a terminal in this folder and run `python3 -m http.server`, then visit http://localhost:8000.
+
 ## Features
 **Pages:** merge any number of PDFs and images, drag to reorder (or Move earlier/later on phones), rotate, duplicate, delete, insert blank pages, download selected pages as a new PDF.
 **Edit and sign:** type text anywhere (Helvetica, Times or Courier, any size and colour, bold, italic), signatures (draw, type in a script font, or upload a photo with automatic background removal, saved on your device for next time), images, ticks and crosses for forms, highlighter, whiteout, freehand drawing, today's date. Move, resize, duplicate and delete anything; arrow keys nudge.

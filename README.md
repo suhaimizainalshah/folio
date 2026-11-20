@@ -2,6 +2,14 @@
 
 Merge, split, reorder, rotate, sign, fill in, annotate, number, watermark, compress and convert PDFs. No account, no limits, no watermarks. Files are processed on the visitor's own device and never uploaded.
 
+## Put it online with GitHub Pages
+1. Create a new **public** repository on github.com, for example `folio`.
+2. Click **uploading an existing file** and drag in everything: `index.html`, `app.js`, `README.md` and the whole `vendor` folder. Click **Commit changes**.
+3. Open **Settings → Pages**, choose **Deploy from a branch**, branch `main`, folder `/ (root)`, and **Save**.
+4. In about a minute it is live at `https://<your-username>.github.io/folio/`.
+
+It must be opened from a web address (GitHub Pages or a local server), not by double-clicking `index.html`, because browsers block the PDF engine's background worker on `file://` pages. To run it on your own computer: open a terminal in this folder and run `python3 -m http.server`, then visit http://localhost:8000.
+
 ## Features
 **Pages:** merge any number of PDFs and images, drag to reorder (or Move earlier/later on phones), rotate, duplicate, delete, insert blank pages, download selected pages as a new PDF.
 **Edit and sign:** type text anywhere (Helvetica, Times or Courier, any size and colour, bold, italic), signatures (draw, type in a script font, or upload a photo with automatic background removal, saved on your device for next time), images, ticks and crosses for forms, highlighter, whiteout, freehand drawing, today's date. Move, resize, duplicate and delete anything; arrow keys nudge.
@@ -32,3 +40,9 @@ Click the Folio logo to go back to the start screen.
 
 ## Built with
 pdf.js 4.10.38 (Apache-2.0), pdf-lib 1.17.1 (MIT), JSZip 3.10.1 (MIT), docx 9.0.2 (MIT) and PptxGenJS 3.12.0 (MIT), included in `vendor/` so the site has no outside dependencies apart from Google Fonts.
+
+## Compare, Bates, flipbook and text recognition
+- **Compare two versions:** finds every word added, removed or changed between the open document (or any PDF) and a revised PDF. See each change by page, then download the revised version with changes highlighted, the original with removals struck through, or a plain-text change report. Compares wording, not layout or images.
+- **Bates numbering and stamps:** prefix, start number, digits and suffix (for example ABC000001), four positions, an optional stamp such as “CONFIDENTIAL”, and a white box for legibility. Number the open document, or many PDFs in sequence: they download as a ZIP with an `index.csv` of each file’s number range. Rotated pages are handled.
+- **Flipbook:** turns the document into a single, self-contained HTML page with page-turning, two-page spreads on wide screens, swipe, arrow keys, zoom and full screen. Email it, open it offline or upload it to any website.
+- **Read text (OCR):** recognises text in scanned pages in 12 languages and saves a searchable PDF (an invisible text layer over the original pages) or a text file. It uses Tesseract.js, which the browser downloads from jsDelivr the first time it is used (about 5 to 15 MB, including language data); the document itself never leaves the device. Searchable PDFs support Latin-script languages; Arabic and Chinese save as text files.

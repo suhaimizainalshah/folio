@@ -730,6 +730,10 @@ const TASKS = [
   ["Images to PDF", "pages", "M3 4h18v16H3zM21 16l-5-5-9 9", "image/*"],
   ["PDF to Word or PowerPoint", "convert", "M4 7h11l-3-3M20 17H9l3 3"],
   ["Get others to sign", { tool: "request" }, "M3 7l9 6 9-6M3 5h18v14H3z"],
+  ["Compare two versions", "compare", "M8 3H4v18h4M16 3h4v18h-4M12 3v18"],
+  ["Number documents (Bates)", "bates", "M4 6h16M4 12h10M4 18h6M17 15l3 3-3 3"],
+  ["Make a flipbook", "flip", "M12 6c-3-2-6-2-9 0v13c3-2 6-2 9 0 3-2 6-2 9 0V6c-3-2-6-2-9 0zM12 6v13"],
+  ["Make a scan searchable", "ocr", "M4 7V4h3M17 4h3v3M20 17v3h-3M7 20H4v-3M8 12h8"],
 ];
 $("#tasks").innerHTML = TASKS.map(([n, , d], i) => `<button class="task" data-task="${i}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>${n}</button>`).join("");
 $("#tasks").onclick = e => { const b = e.target.closest("[data-task]"); if (!b) return; const [, t, , extra] = TASKS[+b.dataset.task]; pick(extra === "image/*" ? "image/*" : "application/pdf,image/*", t); };
@@ -1098,3 +1102,8 @@ $("#cvGo").onclick = async () => {
   try { if (cvFmt === "img") await exportImages(); else if (cvFmt === "pptx") await exportPptx(); else await exportDocx(); }
   catch (err) { console.error(err); busy(false); toast("Couldn’t convert this PDF. Try again, or choose “Exact look”.", 4500); }
 };
+
+
+/* ============ Shared with extras.js (compare, Bates, flipbook, text recognition) ============ */
+window.Folio = { pdfjsLib, PDFDocument, StandardFonts, rgb, degrees, buildPdf, renderBuilt, busy, toast, download, count, safeName, kb, esc, tick, hasDoc: () => pages.length > 0 };
+window.dispatchEvent(new Event("folio-ready"));

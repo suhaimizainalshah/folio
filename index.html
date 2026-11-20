@@ -284,6 +284,10 @@ a.brand:hover{background:var(--soft)}
       <button class="tool" role="tab" data-tool="compress" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7"/></svg>Compress</button>
       <button class="tool" role="tab" data-tool="convert" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11l-3-3M20 17H9l3 3"/></svg>Convert</button>
       <button class="tool" role="tab" data-tool="form" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h5M8 16h3"/><path d="m14 16 1.5 1.5L18 15"/></svg>Fill form</button>
+      <button class="tool" role="tab" data-tool="compare" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H4v18h4M16 3h4v18h-4M12 3v18"/></svg>Compare</button>
+      <button class="tool" role="tab" data-tool="bates" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h6M17 15l3 3-3 3"/></svg>Bates</button>
+      <button class="tool" role="tab" data-tool="flip" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-3-2-6-2-9 0v13c3-2 6-2 9 0 3-2 6-2 9 0V6c-3-2-6-2-9 0zM12 6v13"/></svg>Flipbook</button>
+      <button class="tool" role="tab" data-tool="ocr" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h3M17 4h3v3M20 17v3h-3M7 20H4v-3M8 12h8"/></svg>Read text</button>
     </nav>
 
     <main class="stage" id="stage">
@@ -516,6 +520,54 @@ a.brand:hover{background:var(--soft)}
         <div class="group" id="formFields"></div>
         <label class="check" id="flatWrap"><input type="checkbox" id="formFlat" checked>Lock answers so they can’t be changed</label>
       </section>
+      <!-- Compare -->
+      <section class="pane" data-pane="compare" hidden>
+        <h2>Compare two versions</h2>
+        <p class="hint">Finds every word added, removed or changed between two PDFs, such as two drafts of a contract or policy.</p>
+        <div class="group"><span class="lbl">Original</span><div class="chips" id="cmpASrc"><button class="chip" data-ca="open" aria-pressed="true">The open document</button><button class="chip" data-ca="file" aria-pressed="false">Choose a file</button></div><p class="note" id="cmpAName">Uses the document you have open.</p></div>
+        <div class="group"><span class="lbl">Revised version</span><button class="btn" id="cmpBPick">Choose the revised PDF</button><p class="note" id="cmpBName">No file chosen yet.</p></div>
+        <button class="btn primary" id="cmpRun" disabled>Compare</button>
+        <div id="cmpOut" class="group" aria-live="polite"></div>
+      </section>
+
+      <!-- Bates numbering -->
+      <section class="pane" data-pane="bates" hidden>
+        <h2>Bates numbering and stamps</h2>
+        <p class="hint">Gives every page a unique number, such as ABC000001, for legal, audit and compliance documents. Number one file or many in sequence.</p>
+        <div class="row2"><div class="field"><label for="btPrefix">Prefix</label><input type="text" id="btPrefix" value="ABC"></div><div class="field"><label for="btSuffix">Suffix</label><input type="text" id="btSuffix" value=""></div></div>
+        <div class="row2"><div class="field"><label for="btStart">Start at</label><input type="number" id="btStart" value="1" min="0"></div><div class="field"><label for="btDigits">Digits</label><input type="number" id="btDigits" value="6" min="1" max="12"></div></div>
+        <div class="group"><span class="lbl">Position</span><div class="chips" id="btPos"><button class="chip" data-bp="br" aria-pressed="true">Bottom right</button><button class="chip" data-bp="bc" aria-pressed="false">Bottom centre</button><button class="chip" data-bp="bl" aria-pressed="false">Bottom left</button><button class="chip" data-bp="tr" aria-pressed="false">Top right</button></div></div>
+        <div class="field"><label for="btStamp">Stamp text (optional)</label><input type="text" id="btStamp" placeholder="For example: CONFIDENTIAL. Produced under agreement"></div>
+        <div class="row2"><div class="field"><label for="btSize">Text size</label><input type="number" id="btSize" value="9" min="5" max="24"></div><div class="field"><label>&nbsp;</label><label class="check"><input type="checkbox" id="btBox" checked>White box behind</label></div></div>
+        <p class="note" id="btPreview"></p>
+        <button class="btn primary" id="btOne">Number this document</button>
+        <button class="btn" id="btMany">Number several PDFs in sequence</button>
+        <p class="note">For several files, Booth numbers them in name order and downloads a ZIP with an index of the number range in each file.</p>
+      </section>
+
+      <!-- Flipbook -->
+      <section class="pane" data-pane="flip" hidden>
+        <h2>Flipbook</h2>
+        <p class="hint">Turns your PDF into a page-turning book: a single web page you can email, put on a website or open offline.</p>
+        <div class="field"><label for="fbTitle">Title</label><input type="text" id="fbTitle" placeholder="Annual report 2026"></div>
+        <div class="group"><span class="lbl">Quality</span><div class="chips" id="fbQ"><button class="chip" data-fq="900" aria-pressed="false">Smaller file</button><button class="chip" data-fq="1300" aria-pressed="true">Balanced</button><button class="chip" data-fq="1800" aria-pressed="false">Sharpest</button></div></div>
+        <div class="row2"><div class="field"><label for="fbBg">Background</label><input type="color" id="fbBg" value="#2D3748"></div><div class="field"><label>&nbsp;</label><label class="check"><input type="checkbox" id="fbCover" checked>Cover on its own</label></div></div>
+        <button class="btn primary" id="fbGo">Make flipbook</button>
+        <p class="note">Readers turn pages by clicking, swiping or using the arrow keys. Text inside the flipbook is shown as images.</p>
+      </section>
+
+      <!-- Text recognition -->
+      <section class="pane" data-pane="ocr" hidden>
+        <h2>Read text (OCR)</h2>
+        <p class="hint">Recognises the words in scanned pages and photos, so you can search, select and copy them.</p>
+        <div class="field"><label for="ocrLang">Language of the text</label><select id="ocrLang"><option value="eng">English</option><option value="msa">Malay</option><option value="ind">Indonesian</option><option value="fra">French</option><option value="spa">Spanish</option><option value="deu">German</option><option value="ita">Italian</option><option value="por">Portuguese</option><option value="nld">Dutch</option><option value="vie">Vietnamese</option><option value="ara">Arabic (text file only)</option><option value="chi_sim">Chinese, simplified (text file only)</option></select></div>
+        <label class="check"><input type="checkbox" id="ocrSkip" checked>Skip pages that already have text</label>
+        <button class="btn primary" id="ocrPdf">Make a searchable PDF</button>
+        <button class="btn" id="ocrTxt">Get the text as a file</button>
+        <p class="note">The first time, your browser downloads the text-recognition engine and language data (about 5 to 15 MB). Your document itself never leaves your device.</p>
+        <div class="progress" id="ocrBarWrap" hidden><i id="ocrBar"></i></div>
+      </section>
+
     </aside>
   </div>
 </div>
@@ -565,5 +617,8 @@ a.brand:hover{background:var(--soft)}
 <script src="vendor/pdf-lib.min.js"></script>
 <script src="vendor/jszip.min.js"></script>
 <script type="module" src="app.js"></script>
+<input type="file" id="cmpIn" accept="application/pdf" hidden>
+<input type="file" id="batesIn" accept="application/pdf" multiple hidden>
+<script type="module" src="extras.js"></script>
 </body>
 </html>

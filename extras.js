@@ -148,12 +148,35 @@ $("#fbGo").onclick = async () => {
       c.width = c.height = 0; busy(`Page ${i} of ${doc.numPages}`, i / doc.numPages * 100);
     }
     doc.destroy(); const title = ($("#fbTitle").value || F.safeName()).trim();
-    const pdf = $("#fbPdf").checked ? "data:application/pdf;base64," + await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result.split(",")[1]); fr.readAsDataURL(new Blob([bytes], { type: "application/pdf" })); }) : null;
+    const pdf = $("#fbPdf").checked && $("#fbSite").checked ? "file" : $("#fbPdf").checked ? "data:application/pdf;base64," + await new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result.split(",")[1]); fr.readAsDataURL(new Blob([bytes], { type: "application/pdf" })); }) : null;
+    if ($("#fbSite").checked) {
+      // a website folder: small index.html, one image per page, a 1200×630 preview card for link sharing
+      busy("Building the website folder", 95); const zip = new JSZip(), ext = canWebp ? "webp" : "jpg", files = imgs.map((im, i) => ({ ...im, path: `pages/${String(i + 1).padStart(3, "0")}.${ext}` }));
+      files.forEach(f => zip.file(f.path, f.src.split(",")[1], { base64: true }));
+      zip.file("preview.jpg", (await previewCard(imgs[0].src, title, $("#fbBg").value)).split(",")[1], { base64: true });
+      if (pdf) zip.file(`${F.safeName()}.pdf`, bytes);
+      const html = flipHtml(title, files.map(f => ({ src: f.path, w: f.w, h: f.h })), texts, $("#fbBg").value, $("#fbCover").checked, pdf ? `${F.safeName()}.pdf` : null, `${F.safeName()}.pdf`, { base: $("#fbUrl").value.trim(), preview: "preview.jpg" });
+      zip.file("index.html", html); zip.file(".nojekyll", "");
+      download(await zip.generateAsync({ type: "blob" }), `${F.safeName()}-flipbook-site.zip`); busy(false);
+      toast($("#fbUrl").value.trim() ? "Website folder saved. Put its contents at that address, and link previews will show your cover." : "Website folder saved. Add the web address next time so LinkedIn and others can show a preview image.", 7000); count("flipbook_site"); return;
+    }
     const html = flipHtml(title, imgs, texts, $("#fbBg").value, $("#fbCover").checked, pdf, `${F.safeName()}.pdf`), mb = html.length / 1048576;
     download(new Blob([html], { type: "text/html" }), `${F.safeName()}-flipbook.html`); busy(false);
     toast(`Flipbook saved (${mb.toFixed(1)} MB).${mb > 16 ? " That’s large for phones: try “Balanced” or “Smaller file”." : " Open it in any browser, or put it on a website."}`, 6000); count("flipbook");
   } catch (err) { console.error(err); busy(false); toast("Couldn’t make a flipbook from this PDF."); }
 };
+// A 1200×630 preview card for link sharing (LinkedIn, WhatsApp, Slack and others)
+async function previewCard(coverSrc, title, bg) {
+  const c = document.createElement("canvas"); c.width = 1200; c.height = 630; const x = c.getContext("2d"), ink = inkFor(bg);
+  x.fillStyle = bg; x.fillRect(0, 0, 1200, 630);
+  const img = new Image(); img.src = coverSrc; await img.decode(); const h = 540, w = h * img.naturalWidth / img.naturalHeight;
+  x.save(); x.shadowColor = "rgba(0,0,0,.35)"; x.shadowBlur = 30; x.shadowOffsetY = 12; x.fillStyle = "#fff"; x.fillRect(60, 45, w, h); x.restore(); x.drawImage(img, 60, 45, w, h);
+  const tx = 60 + w + 56, maxW = 1200 - tx - 60; x.fillStyle = ink.fg; x.font = "700 46px system-ui, -apple-system, Segoe UI, sans-serif";
+  const words = title.split(/\s+/), lines = []; let line = ""; for (const wd of words) { const tst = line ? line + " " + wd : wd; if (x.measureText(tst).width > maxW && line) { lines.push(line); line = wd; } else line = tst; } if (line) lines.push(line);
+  const shown = lines.slice(0, 6); let y = 315 - (shown.length * 58) / 2 + 40; shown.forEach(l => { x.fillText(l, tx, y); y += 58; });
+  x.font = "600 24px system-ui, -apple-system, Segoe UI, sans-serif"; x.globalAlpha = .8; x.fillText("Read the flipbook  →", tx, Math.min(585, y + 30)); x.globalAlpha = 1;
+  return c.toDataURL("image/jpeg", .9);
+}
 // Readable header text on any background colour
 function inkFor(hex) { const n = parseInt(hex.replace("#", ""), 16), r = n >> 16 & 255, g = n >> 8 & 255, b = n & 255, l = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255; return l > .6 ? { fg: "#16191D", btn: "rgba(0,0,0,.08)", hov: "rgba(0,0,0,.16)" } : { fg: "#FFFFFF", btn: "rgba(255,255,255,.14)", hov: "rgba(255,255,255,.26)" }; }
 const FLIP_JS = [
@@ -189,11 +212,13 @@ const FLIP_JS = [
 "var last=two();addEventListener('resize',function(){if(two()!==last){last=two();var page=spreads[s].find(function(x){return x!=null});build();s=Math.max(0,spreads.findIndex(function(sp){return sp.indexOf(page)>=0}));show()}else size()});",
 "addEventListener('hashchange',pageFromHash);build();var start=/^#page-(\\d+)$/.exec(location.hash);if(start){s=-1;if(!pageFromHash()){s=0;show()}}else show();"
 ].join("\n");
-function flipHtml(title, imgs, texts, bg, cover, pdf, pdfName) {
+function flipHtml(title, imgs, texts, bg, cover, pdf, pdfName, site = {}) {
   const ratio = (imgs[0].h / imgs[0].w).toFixed(4), t = esc(title), ink = inkFor(bg), data = JSON.stringify({ pages: imgs.map(i => i.src), texts, cover, ratio: +ratio }).replace(/</g, "\\u003c");
-  const desc = esc((texts.find(x => x && x.length > 60) || "").slice(0, 160));
+  const desc = esc(site.description || (texts.find(x => x && x.length > 60) || "").slice(0, 160)), base = site.base ? site.base.replace(/\/?$/, "/") : "";
+  const og = site.preview ? `<meta property="og:image" content="${esc(base + site.preview)}"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta property="og:image:alt" content="${t}"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:image" content="${esc(base + site.preview)}">` : "";
+  const canon = base ? `<link rel="canonical" href="${esc(base)}"><meta property="og:url" content="${esc(base)}">` : "";
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${t}</title>
-<meta name="description" content="${desc}"><meta property="og:title" content="${t}"><meta property="og:description" content="${desc}"><meta property="og:type" content="book">
+<meta name="description" content="${desc}"><meta property="og:title" content="${t}"><meta property="og:description" content="${desc}"><meta property="og:type" content="website"><meta name="twitter:title" content="${t}"><meta name="twitter:description" content="${desc}">${og}${canon}
 <style>
 *{box-sizing:border-box}html,body{margin:0;height:100%;background:${bg};color:${ink.fg};font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif;overflow:hidden}
 [hidden]{display:none!important}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}

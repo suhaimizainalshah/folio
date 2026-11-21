@@ -554,6 +554,8 @@ a.brand:hover{background:var(--soft)}
         <div class="group"><span class="lbl">Quality</span><div class="chips" id="fbQ"><button class="chip" data-fq="900" aria-pressed="false">Smaller file</button><button class="chip" data-fq="1300" aria-pressed="true">Balanced</button><button class="chip" data-fq="1800" aria-pressed="false">Sharpest</button></div></div>
         <div class="row2"><div class="field"><label for="fbBg">Background</label><input type="color" id="fbBg" value="#2D3748"></div><div class="field"><label>&nbsp;</label><label class="check"><input type="checkbox" id="fbCover" checked>Cover on its own</label></div></div>
         <label class="check"><input type="checkbox" id="fbPdf">Let readers download the PDF too (makes the file bigger)</label>
+        <label class="check"><input type="checkbox" id="fbSite">Make a website folder (best for GitHub Pages and sharing on LinkedIn)</label>
+        <div class="field" id="fbUrlWrap"><label for="fbUrl">Where it will live (web address, for link previews)</label><input type="url" id="fbUrl" placeholder="https://yourname.github.io/my-flipbook/"></div>
         <button class="btn primary" id="fbGo">Make flipbook</button>
         <p class="note">Readers turn pages by clicking, swiping or using the arrow keys, can search the text and jump to any page, and can link to a page (for example …#page-12). To share it as a link, put the file on a website.</p>
       </section>

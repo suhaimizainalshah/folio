@@ -734,6 +734,7 @@ const TASKS = [
   ["Number documents (Bates)", "bates", "M4 6h16M4 12h10M4 18h6M17 15l3 3-3 3"],
   ["Make a flipbook", "flip", "M12 6c-3-2-6-2-9 0v13c3-2 6-2 9 0 3-2 6-2 9 0V6c-3-2-6-2-9 0zM12 6v13"],
   ["Make a scan searchable", "ocr", "M4 7V4h3M17 4h3v3M20 17v3h-3M7 20H4v-3M8 12h8"],
+  ["Read aloud, paper and voice notes", "class", "M4 19V5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2zM8 7h6M8 11h8"],
 ];
 $("#tasks").innerHTML = TASKS.map(([n, , d], i) => `<button class="task" data-task="${i}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>${n}</button>`).join("");
 $("#tasks").onclick = e => { const b = e.target.closest("[data-task]"); if (!b) return; const [, t, , extra] = TASKS[+b.dataset.task]; pick(extra === "image/*" ? "image/*" : "application/pdf,image/*", t); };
@@ -1105,5 +1106,5 @@ $("#cvGo").onclick = async () => {
 
 
 /* ============ Shared with extras.js (compare, Bates, flipbook, text recognition) ============ */
-window.Folio = { pdfjsLib, PDFDocument, StandardFonts, rgb, degrees, buildPdf, renderBuilt, busy, toast, download, count, safeName, kb, esc, tick, hasDoc: () => pages.length > 0 };
+window.Folio = { pdfjsLib, PDFDocument, StandardFonts, rgb, degrees, buildPdf, renderBuilt, busy, toast, download, count, safeName, kb, esc, tick, addFiles, hasDoc: () => pages.length > 0, insertIndex: () => sel.size ? Math.max(...pages.map((p, i) => (sel.has(p.id) ? i : -1))) + 1 : pages.length };
 window.dispatchEvent(new Event("folio-ready"));

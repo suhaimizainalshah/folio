@@ -288,6 +288,7 @@ a.brand:hover{background:var(--soft)}
       <button class="tool" role="tab" data-tool="bates" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h6M17 15l3 3-3 3"/></svg>Bates</button>
       <button class="tool" role="tab" data-tool="flip" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6c-3-2-6-2-9 0v13c3-2 6-2 9 0 3-2 6-2 9 0V6c-3-2-6-2-9 0zM12 6v13"/></svg>Flipbook</button>
       <button class="tool" role="tab" data-tool="ocr" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h3M17 4h3v3M20 17v3h-3M7 20H4v-3M8 12h8"/></svg>Read text</button>
+      <button class="tool" role="tab" data-tool="class" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2zM8 7h6M8 11h8"/></svg>Classroom</button>
     </nav>
 
     <main class="stage" id="stage">
@@ -556,6 +557,32 @@ a.brand:hover{background:var(--soft)}
         <p class="note">Readers turn pages by clicking, swiping or using the arrow keys. Text inside the flipbook is shown as images.</p>
       </section>
 
+
+      <!-- Classroom (Kami-style) -->
+      <section class="pane" data-pane="class" hidden>
+        <h2>Classroom tools</h2>
+        <details class="sec" open><summary>Read aloud</summary><div class="group">
+          <p class="hint">Reads the document out loud, which helps learners who prefer listening or are still building reading confidence.</p>
+          <div class="field"><label for="raVoice">Voice</label><select id="raVoice"></select></div>
+          <div class="row2"><div class="field"><label for="raRate">Speed</label><input type="range" id="raRate" min="0.6" max="1.6" step="0.1" value="1"></div><div class="field"><label for="raFrom">Start at page</label><input type="number" id="raFrom" min="1" value="1"></div></div>
+          <div class="row3"><button class="btn primary" id="raPlay">Read aloud</button><button class="btn" id="raPause">Pause</button><button class="btn" id="raStop">Stop</button></div>
+          <p class="note" id="raNow" aria-live="polite"></p>
+        </div></details>
+        <details class="sec"><summary>Add paper pages</summary><div class="group">
+          <p class="hint">Insert writing or maths paper after the selected page, or at the end.</p>
+          <div class="field"><label for="ppType">Paper</label><select id="ppType"><option value="lined">Lined</option><option value="narrow">Narrow lined</option><option value="handwriting">Handwriting practice (three lines)</option><option value="grid">Squared, 5 mm</option><option value="graph">Graph paper, 1 cm with 2 mm</option><option value="dots">Dotted</option><option value="iso">Isometric dots</option><option value="cornell">Cornell notes</option><option value="music">Music staves</option><option value="blank">Blank</option></select></div>
+          <div class="row2"><div class="field"><label for="ppSize">Size</label><select id="ppSize"><option value="a4">A4</option><option value="letter">US Letter</option></select></div><div class="field"><label for="ppCount">How many</label><input type="number" id="ppCount" min="1" max="30" value="1"></div></div>
+          <button class="btn" id="ppAdd">Add paper</button>
+        </div></details>
+        <details class="sec"><summary>Voice notes</summary><div class="group">
+          <p class="hint">Record spoken feedback or instructions and save them inside the PDF.</p>
+          <div class="row2"><button class="btn primary" id="vnRec">Start recording</button><button class="btn" id="vnStop" disabled>Stop</button></div>
+          <div id="vnList" class="group"></div>
+          <label class="check"><input type="checkbox" id="vnLabel" checked>Add a small label on page 1 saying a voice note is attached</label>
+          <button class="btn" id="vnSave" disabled>Download PDF with voice notes</button>
+          <p class="note">Voice notes play in PDF apps that show attachments, such as Adobe Acrobat Reader. Browsers’ built-in viewers usually don’t show them.</p>
+        </div></details>
+      </section>
       <!-- Text recognition -->
       <section class="pane" data-pane="ocr" hidden>
         <h2>Read text (OCR)</h2>

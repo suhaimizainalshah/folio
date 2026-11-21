@@ -242,3 +242,64 @@ async function recognise(asPdf) {
 }
 $("#ocrPdf").onclick = () => recognise(true);
 $("#ocrTxt").onclick = () => recognise(false);
+
+/* ============ 5. Classroom tools (Kami-style): read aloud, paper pages, voice notes ============ */
+// Read aloud with the browser's own speech voices
+const synth = window.speechSynthesis;
+function fillVoices() { if (!synth) return; const vs = synth.getVoices(), sel = $("#raVoice"), prev = sel.value; sel.innerHTML = vs.map((v, i) => `<option value="${i}">${esc(v.name)} (${esc(v.lang)})</option>`).join("") || "<option>Default voice</option>"; const en = vs.findIndex(v => /^en(-|_)GB/i.test(v.lang)); sel.value = prev || String(en >= 0 ? en : 0); }
+if (synth) { fillVoices(); synth.onvoiceschanged = fillVoices; } else { $("#raPlay").disabled = true; $("#raNow").textContent = "This browser can’t read aloud."; }
+let raQueue = [], raStop = false;
+$("#raPlay").onclick = async () => {
+  if (!synth) return; if (synth.paused) return synth.resume(); if (!F.hasDoc()) return toast("Open a PDF first.");
+  synth.cancel(); raStop = false; busy("Getting the text", 30);
+  try {
+    const doc = await pdfjsLib.getDocument({ data: (await F.buildPdf(undefined, { decorate: false })).slice() }).promise, from = Math.max(1, Math.min(doc.numPages, +$("#raFrom").value || 1)); raQueue = [];
+    for (let i = from; i <= doc.numPages; i++) { const tc = await (await doc.getPage(i)).getTextContent(), text = tc.items.map(t => t.str + (t.hasEOL ? " " : "")).join("").replace(/\s+/g, " ").trim(); (text.match(/[^.!?]+[.!?]*\s*/g) || []).forEach(s => s.trim() && raQueue.push({ page: i, s: s.trim() })); }
+    doc.destroy(); busy(false);
+    if (!raQueue.length) return toast("No readable text. If this is a scan, use “Read text” first.", 4500);
+    const voice = synth.getVoices()[+$("#raVoice").value], rate = +$("#raRate").value;
+    const speakNext = () => { if (raStop || !raQueue.length) { $("#raNow").textContent = raStop ? "" : "Finished reading."; return; } const { page, s } = raQueue.shift(), u = new SpeechSynthesisUtterance(s); if (voice) u.voice = voice; u.rate = rate; u.onend = speakNext; u.onerror = speakNext; $("#raNow").innerHTML = `<b>Page ${page}:</b> ${esc(s)}`; synth.speak(u); };
+    speakNext(); count("read_aloud");
+  } catch (err) { console.error(err); busy(false); toast("Couldn’t read this document aloud."); }
+};
+$("#raPause").onclick = () => synth?.speaking && (synth.paused ? synth.resume() : synth.pause());
+$("#raStop").onclick = () => { raStop = true; raQueue = []; synth?.cancel(); $("#raNow").textContent = ""; };
+
+// Paper pages drawn as real vector lines, so they print crisply
+$("#ppAdd").onclick = async () => {
+  const type = $("#ppType").value, [W, H] = $("#ppSize").value === "letter" ? [612, 792] : [595.28, 841.89], n = Math.max(1, Math.min(30, +$("#ppCount").value || 1)), mm = 72 / 25.4;
+  const doc = await PDFDocument.create(), light = rgb(.62, .74, .86), mid = rgb(.45, .58, .72), red = rgb(.86, .45, .45), m = 15 * mm;
+  for (let k = 0; k < n; k++) {
+    const p = doc.addPage([W, H]), line = (x1, y1, x2, y2, c = light, w = .6, dash) => p.drawLine({ start: { x: x1, y: y1 }, end: { x: x2, y: y2 }, color: c, thickness: w, dashArray: dash });
+    if (type === "lined" || type === "narrow") { const gap = (type === "lined" ? 8.7 : 7.1) * mm; for (let y = H - 30 * mm; y > m; y -= gap) line(m, y, W - m, y); line(m + 18 * mm, H - m, m + 18 * mm, m, red, .8); }
+    if (type === "handwriting") { const gap = 22 * mm; for (let y = H - 30 * mm; y > m + 10 * mm; y -= gap) { line(m, y, W - m, y, mid, .8); line(m, y - 5 * mm, W - m, y - 5 * mm, light, .5, [3, 3]); line(m, y - 10 * mm, W - m, y - 10 * mm, mid, .8); line(m, y - 14 * mm, W - m, y - 14 * mm, light, .4); } }
+    if (type === "grid" || type === "graph") { const step = type === "grid" ? 5 * mm : 2 * mm; let i = 0; for (let x = m; x <= W - m + .1; x += step, i++) line(x, m, x, H - m, type === "graph" && i % 5 === 0 ? mid : light, type === "graph" && i % 5 === 0 ? .7 : .35); i = 0; for (let y = m; y <= H - m + .1; y += step, i++) line(m, y, W - m, y, type === "graph" && i % 5 === 0 ? mid : light, type === "graph" && i % 5 === 0 ? .7 : .35); }
+    if (type === "dots") for (let x = m; x <= W - m; x += 5 * mm) for (let y = m; y <= H - m; y += 5 * mm) p.drawCircle({ x, y, size: .7, color: mid });
+    if (type === "iso") { const s = 6 * mm, h = s * Math.sqrt(3) / 2; let r = 0; for (let y = m; y <= H - m; y += h, r++) for (let x = m + (r % 2 ? s / 2 : 0); x <= W - m; x += s) p.drawCircle({ x, y, size: .7, color: mid }); }
+    if (type === "cornell") { line(m, H - 35 * mm, W - m, H - 35 * mm, mid, 1); line(m + 55 * mm, H - 35 * mm, m + 55 * mm, 55 * mm, mid, 1); line(m, 55 * mm, W - m, 55 * mm, mid, 1); for (let y = H - 35 * mm - 8 * mm; y > 55 * mm; y -= 8 * mm) line(m + 55 * mm, y, W - m, y); const f = await doc.embedFont(StandardFonts.Helvetica); [["Cues and questions", m + 2, H - 41 * mm], ["Notes", m + 57 * mm, H - 41 * mm], ["Summary", m + 2, 50 * mm]].forEach(([t, x, y]) => p.drawText(t, { x, y, size: 9, font: f, color: mid })); }
+    if (type === "music") { for (let top = H - 30 * mm; top > m + 12 * mm; top -= 26 * mm) for (let i = 0; i < 5; i++) line(m, top - i * 2.2 * mm, W - m, top - i * 2.2 * mm, rgb(.35, .38, .42), .6); }
+  }
+  const file = new File([await doc.save()], `${type}-paper.pdf`, { type: "application/pdf" });
+  if (F.hasDoc()) await F.addFiles([file], F.insertIndex()); else await F.addFiles([file]);
+  toast(`Added ${n} page${n > 1 ? "s" : ""} of ${$("#ppType").selectedOptions[0].textContent.toLowerCase()}`); count("paper_pages");
+};
+
+// Voice notes, stored inside the PDF as attachments
+const notes = []; let rec = null, chunks = [];
+$("#vnRec").onclick = async () => {
+  try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); chunks = []; rec = new MediaRecorder(stream); rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+    rec.onstop = () => { stream.getTracks().forEach(t => t.stop()); const type = (rec.mimeType || "audio/webm").split(";")[0], blob = new Blob(chunks, { type }); notes.push({ blob, type, name: `voice-note-${notes.length + 1}.${type.includes("mp4") ? "m4a" : type.includes("ogg") ? "ogg" : "webm"}`, url: URL.createObjectURL(blob) }); showNotes(); };
+    rec.start(); $("#vnRec").disabled = true; $("#vnStop").disabled = false; $("#vnRec").textContent = "Recording…"; }
+  catch { toast("Allow microphone access to record a voice note."); }
+};
+$("#vnStop").onclick = () => { rec?.stop(); $("#vnRec").disabled = false; $("#vnStop").disabled = true; $("#vnRec").textContent = "Record another"; };
+function showNotes() { $("#vnList").innerHTML = notes.map((n, i) => `<div style="display:grid;grid-template-columns:1fr auto;gap:.4rem;align-items:center"><audio controls src="${n.url}" style="width:100%"></audio><button class="btn" data-vndel="${i}" aria-label="Remove voice note ${i + 1}">✕</button></div>`).join(""); $("#vnSave").disabled = !notes.length; }
+$("#vnList").addEventListener("click", e => { const b = e.target.closest("[data-vndel]"); if (!b) return; notes.splice(+b.dataset.vndel, 1); showNotes(); });
+$("#vnSave").onclick = async () => {
+  if (!F.hasDoc()) return toast("Open a PDF first.");
+  try { busy("Adding voice notes", 50); const doc = await PDFDocument.load(await F.buildPdf(), { ignoreEncryption: true });
+    for (const n of notes) await doc.attach(new Uint8Array(await n.blob.arrayBuffer()), n.name, { mimeType: n.type, description: "Voice note", creationDate: new Date() });
+    if ($("#vnLabel").checked) { const p = doc.getPage(0), P = placer(p), f = await doc.embedFont(StandardFonts.HelveticaBold), t = `${notes.length} voice note${notes.length > 1 ? "s" : ""} attached: open the attachments panel to listen`, sz = 8, w = f.widthOfTextAtSize(t, sz), [x, y] = P.map(P.vw - w - 22, P.vh - 22); p.drawRectangle({ x: x - 4, y: y - 4, width: w + 8, height: sz + 8, color: rgb(1, .96, .75), rotate: P.rot }); p.drawText(t, { x, y, size: sz, font: f, color: rgb(.25, .2, .05), rotate: P.rot }); }
+    download(new Blob([await doc.save()], { type: "application/pdf" }), `${F.safeName()}-with-voice-notes.pdf`); busy(false); toast("Saved with voice notes"); count("voice_notes"); }
+  catch (err) { console.error(err); busy(false); toast("Couldn’t add the voice notes to this PDF."); }
+};
